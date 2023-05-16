@@ -1,0 +1,41 @@
+tablePath = "spike templates_5.xlsx";
+templateLUT = readtable(tablePath,"ReadVariableNames",true,"VariableNamingRule","preserve","TextType","string");
+samplingRate = 10000;
+t = linspace(0,2.5,2.5*samplingRate);
+
+firstTrial = 1;
+lastTrial = 4;
+
+nTrials = lastTrial - firstTrial + 1;
+
+figure;
+
+itrial = 1;
+tileplots = tiledlayout(2,3,'TileSpacing','compact');
+
+for irow = firstTrial:lastTrial
+    Trow = templateLUT(irow,:);
+    muscleID = Trow.("muscleID");
+    mothID = Trow.mothID;
+    trialID = Trow.trialID;
+    rowID = Trow.fileID;
+    [stimulus, filteredResponse, spStart, spStop, raster, promSpikeLoc, promSpikeLatency] = EMGanalysis(muscleID, mothID, trialID, rowID);
+    
+    spLocs = find(raster==1);
+    nspikes = length(spLocs);
+    
+    nexttile;
+    plot(t(spLocs),0.05*ones(1,nspikes), '|r', 'LineWidth',2); hold on;
+    plotSpikes(filteredResponse, t, samplingRate, spStart, spStop, "Selected spikes");
+    xline(promSpikeLoc, 'r', 'LineStyle','--');
+    yyaxis right; plot(t, stimulus, 'Color',[0.8500 0.3250 0.0980]); ylim([-0.2 0.2]); 
+    title(join(['latency =' num2str(promSpikeLatency*1000) "ms"], " "));
+    hold off;
+    
+end
+
+title(tileplots, join([Trow.("muscleID") Trow.mothID], " "));
+xlabel(tileplots, 'Time (s)');
+ylabel(tileplots, 'Voltage (mV)');
+
+% yyaxis right; ylabel(tileplots, 'Stimulus');
